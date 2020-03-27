@@ -50,7 +50,7 @@ public:
     }
     T *GetDequeuedObject()
     {
-        T *object = Dequeue()->getObject();
+        T *object = this->Dequeue()->getObject();
         return object;
     }
     QString GenerateGraph(QString name)
@@ -97,6 +97,7 @@ private:
         {
             SimpleNode<T> *newNode = First;
             First = First->getNext();
+            this->Size--;
             return newNode;
         }
         else
