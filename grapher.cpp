@@ -27,11 +27,11 @@ void Grapher::GenerateDot(QString pathDot, QString pathPng)
         stream << DotText << endl;
     }
     file.close();
+    std::string cmd = "dot.exe -Tpng \"" + pathDot.toStdString() + "\" -o \"" + pathPng.toStdString() + "\" ";
     //For debuggin'
-    QString cmd = "dot.exe -Tpng \"" + pathDot + "\" -o \"" + pathPng + "\" ";
     //std::cout<<"El Dot antes:"<<std::endl;
-    //std::cout<<cmd.toStdString().c_str()<<std::endl;
-    const char* cmdCharPointer = cmd.toStdString().c_str();
+    //std::cout<<cmd.c_str()<<std::endl;
+    const char* cmdCharPointer = cmd.c_str();
     //std::cout<<"El Dot despues:"<<std::endl;
     //std::cout<<cmdCharPointer<<std::endl;
     system(cmdCharPointer);

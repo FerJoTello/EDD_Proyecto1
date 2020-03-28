@@ -10,26 +10,30 @@
  *  Functions:
  *      *Public*
  *      ->  SimpleNode(): Constructor. Initializes values for future assignations.
- *      ->  SimpleNode(T object): Contructor. Initializes values with the object that's being holded.
+ *      ->  SimpleNode(T object, QString representation): Contructor. Initializes values with the object that's being holded.
  *      ->  SimpleNode *getNext(): Returns the node following it.
  *      ->  T *getObject(): Returns the object that's being contained on the node.
  *      ->  void setNext(SimpleNode *next): Assigns the next node.
 **/
+#include <QString>
 template <class T>
 class SimpleNode
 {
 private:
     T *Object;
+    QString Representation;
     SimpleNode *Next;
 public:
     SimpleNode()
     {
         this->Object = 0;
+        this->GraphicRepresentation = "";
         this->Next = 0;
     }
-    SimpleNode(T *object)
+    SimpleNode(T *object, QString representation)
     {
         this->Object = object;
+        this->Representation = representation;
         this->Next = 0;
     }
     SimpleNode *getNext() { return this->Next; }
@@ -38,5 +42,6 @@ public:
     {
         this->Next = next;
     }
+    QString getRepresentation(){ return this->Representation; }
 };
 #endif // SIMPLENODE_H

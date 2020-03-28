@@ -1,7 +1,7 @@
 #ifndef QUEUE_H
 #define QUEUE_H
 /** Queue
-  * Dynamic structure that holds simple nodes (check SimpleNode).
+  * Dynamic structure that holds simple nodes (see SimpleNode).
   * FIFO (First In, First Out) behavior
   * Atributes:
   *     *Private*
@@ -12,8 +12,9 @@
   *     *Public*
   *     ->  Queue(): Constructor. Initializes its values to future assignations.
   *     ->  int GetSize(): Returns the size of the queue.
-  *     ->  void Enqueue(T object): Creates a new node on the end of the queue.
+  *     ->  void Enqueue(T object, QString representation): Creates a new node on the end of the queue.
   *     ->  T *GetDequeuedObject(): Returns the object of the first node, removing it from the queue.
+  *     ->  QString GenerateGraph(QString name): Generates a visual representation of the objects that are on the queue.
   *     *Private*
   *     ->  bool IsEmpty(): Checks if the size equals 0, meaning that the queue has 0 nodes.
   *     ->  SimpleNode<T> *Dequeue(): Returns the first node removing it from the queue.
@@ -32,9 +33,9 @@ public:
         Size = 0;
     }
     int GetSize(){ return Size; }
-    void Enqueue(T *object)
+    void Enqueue(T *object, QString representation)
     {
-        SimpleNode<T> *newNode = new SimpleNode<T>(object);
+        SimpleNode<T> *newNode = new SimpleNode<T>(object, representation);
         if(IsEmpty())
         {
             First = newNode;
@@ -56,8 +57,7 @@ public:
     QString GenerateGraph(QString name)
     {
         QString dot = "digraph Report{\n"
-                      "\trankdir = LR;\n"
-                      "\tGraph[label = \"Reporte:" + name + "\" fontname=Arial];\n"
+                      "\tGraph[label = \"Cola:" + name + "\" fontname=Arial];\n"
                       "\tnode [colorscheme = rdbu11 color=10 style= filled shape=record fontname=Arial fontcolor=6];\n"
                       "\tedge [colorscheme = rdbu11 color=10];\n";
         if(GetSize()>0)
@@ -67,8 +67,8 @@ public:
             while(count!=GetSize())
             {
                 QString gNode = QString("\tn%1").arg(count);//Appends "n" with count (gNode = "n0").
-                //This should not be a problem. DoubleCircleLinkedList is used only to contain QString values (Dictionary words) (FOR THIS PROJECT*).
-                QString *object = auxNode->getObject();
+                //Using the representation indicated previously on the creation of the node.
+                QString object = auxNode->getRepresentation();
                 dot+=gNode+"[label = \""+ object +"\"];\n";//Appends dot with gNode and auxNode's Object to set label
                 if(count!=GetSize()-1)
                 {
