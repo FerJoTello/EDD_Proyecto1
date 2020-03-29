@@ -38,7 +38,7 @@ public:
             First->setPrev(newNode); //newNode is First's prevNode
             newNode->setNext(First); //First is newNode's nextNode
             newNode->setPrev(Last);  //Last is newNode's prevNode
-            Last->setNext(newNode);   //newNode is Last's nextNode
+            Last->setNext(newNode);  //newNode is Last's nextNode
             First = newNode;         //newNode is now First
             Size++;
         }
@@ -55,7 +55,7 @@ public:
             DoubleNode<T> *newNode = new DoubleNode<T>(object, representation);
             newNode->setNext(First); //First is newNode's nextNode
             newNode->setPrev(Last);  //Last is newNode's prevNode
-            Last->setNext(newNode);   //newNode is Last's nextNode
+            Last->setNext(newNode);  //newNode is Last's nextNode
             First->setPrev(newNode); //newNode is First's prevNode
             Last = newNode;          //newNode is now Last
             Size++;
@@ -63,17 +63,7 @@ public:
     }
     void AddAt(T *object, QString representation, int index)
     {
-        if (index == 0)
-        {
-            //Since the algorithm is better and doesn't have to iterate...
-            AddFirst(object, representation);
-        }
-        else if (index == this->GetSize())
-        {
-            //Since the algorithm is better and doesn't have to iterate...
-            AddLast(object, representation);
-        }
-        else if (index > 0 && index < GetSize())
+        if (index > 0 && index < GetSize())
         {
             //auxNode should be the DoubleNode that is being pushed one position forward
             DoubleNode<T> *auxNode = GetNodeAt(index);
@@ -83,6 +73,16 @@ public:
             newNode->setNext(auxNode);            //auxNode is newNode's nextNode
             auxNode->setPrev(newNode);            //newNode is auxNode's prevNode
             Size++;
+        }
+        else if (index == 0)
+        {
+            //Since the algorithm is better and doesn't have to iterate...
+            AddFirst(object, representation);
+        }
+        else if (index == this->GetSize())
+        {
+            //Since the algorithm is better and doesn't have to iterate...
+            AddLast(object, representation);
         }
         else
         {
@@ -98,42 +98,42 @@ public:
     {
         QString dot = "digraph Report{\n"
                       "\trankdir = LR;\n"
-                      "\tGraph[label = \"DobleCircular:" + name + "\" fontname=Arial];\n"
-                      "\tnode [colorscheme = rdbu11 color=10 style= filled shape=record fontname=Arial fontcolor=6];\n"
-                      "\tedge [colorscheme = rdbu11 color=10];\n";
-        if(GetSize()>0)
+                      "\tGraph[label = \"DobleCircular:" +
+                      name + "\" fontname=Arial];\n"
+                             "\tnode [colorscheme = rdbu11 color=10 style= filled shape=record fontname=Arial fontcolor=6];\n"
+                             "\tedge [colorscheme = rdbu11 color=10];\n";
+        if (GetSize() > 0)
         {
             int count = 0;
             DoubleNode<T> *auxNode = First;
-            while (count!=GetSize())
+            while (count != GetSize())
             {
-                QString gNode = QString("\tn%1").arg(count);//Appends "n" with count (gNode = "n0").
-                //This should not be a problem. DoubleCircleLinkedList is used only to contain QString values (Dictionary words) (FOR THIS PROJECT*).
+                QString gNode = QString("\tn%1").arg(count); //Appends "n" with count (gNode = "n0").
                 QString object = auxNode->getRepresentation();
-                dot+=gNode+"[label = \""+ object +"\"];\n";//Appends dot with gNode and auxNode's Object to set label
+                dot += gNode + "[label = \"" + object + "\"];\n"; //Appends dot with gNode and auxNode's Object to set label
                 //This is to point to the nextNode
                 //(the "arrow" is darker)
-                if(count==GetSize()-1)
+                if (count == GetSize() - 1)
                 {
                     //It's the Last DoubleNode so it needs to point First DoubleNode
-                    dot+="\t" + gNode + " -> " + QString("n%1").arg(0) + ";\n";//Appends gNode with his nextNode (in this case is the First "n0").
+                    dot += "\t" + gNode + " -> " + QString("n%1").arg(0) + ";\n"; //Appends gNode with his nextNode (in this case is the First "n0").
                 }
                 else
                 {
                     //It's any other node
-                    dot+="\t" + gNode + " -> " + QString("n%1").arg(count+1) + ";\n";//Appends gNode with his nextNode ("n0->n1").
+                    dot += "\t" + gNode + " -> " + QString("n%1").arg(count + 1) + ";\n"; //Appends gNode with his nextNode ("n0->n1").
                 }
                 //This is to point to the prevNode
                 //(the "arrow" is lighter)
-                if(count==0)
+                if (count == 0)
                 {
                     //It's the First node so it needs to point the Last DoubleNode
-                    dot += "\t" + gNode + " -> " + QString("n%1").arg(GetSize()-1) + "[color = 9];\n";//Appends gNode with his prevNode (in this case is the Last "n"+GetSize()-1).
+                    dot += "\t" + gNode + " -> " + QString("n%1").arg(GetSize() - 1) + "[color = 9];\n"; //Appends gNode with his prevNode (in this case is the Last "n"+GetSize()-1).
                 }
                 else
                 {
                     //It's any other node
-                    dot += "\t" + gNode + " -> " + QString("n%1").arg(count-1) + "[color = 9];\n";//Appends gNode with his prevNode ("n1->n0").
+                    dot += "\t" + gNode + " -> " + QString("n%1").arg(count - 1) + "[color = 9];\n"; //Appends gNode with his prevNode ("n1->n0").
                 }
                 auxNode = auxNode->getNext();
                 count++;
@@ -141,7 +141,7 @@ public:
         }
         else
         {
-            dot+="\tn0[shape=none; label=\"null\"]\n";
+            dot += "\tn0[shape=none; label=\"null\"]\n";
         }
         dot += "}";
         Grapher *grapher = new Grapher(name);
@@ -157,15 +157,7 @@ private:
     }
     DoubleNode<T> *GetNodeAt(int index)
     {
-        if (index == 0)
-        {
-            return First;
-        }
-        else if (index == this->GetSize() - 1)
-        {
-            return Last;
-        }
-        else if (index > 0 && index < GetSize() - 1)
+        if (index > 0 && index < GetSize() - 1)
         {
             int count = 0;
             DoubleNode<T> *auxNode = First;
@@ -176,6 +168,14 @@ private:
                 count++;
             }
             return auxNode;
+        }
+        else if (index == 0)
+        {
+            return First;
+        }
+        else if (index == this->GetSize() - 1)
+        {
+            return Last;
         }
         else
         {

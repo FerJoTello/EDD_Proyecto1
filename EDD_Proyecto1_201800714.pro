@@ -24,8 +24,11 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 HEADERS += \
+    EDD/binarysearchtree.h \
+    EDD/binarytreenode.h \
     EDD/doublecirclelinkedlist.h \
     EDD/doublenode.h \
+    EDD/linkedlist.h \
     EDD/queue.h \
     EDD/simplenode.h \
     grapher.h

@@ -27,6 +27,7 @@ private:
     QString Representation;
     DoubleNode *Next;
     DoubleNode *Prev;
+
 public:
     DoubleNode()
     {

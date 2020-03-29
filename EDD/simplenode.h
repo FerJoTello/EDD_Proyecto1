@@ -7,11 +7,13 @@
  *      *Private*
  *      ->  T *Object: The object of any type that it's being holded on the node.
  *      ->  SimpleNode *Next: The next node on the structure that follows this.
+ *      ->  QString Representation: The string which is used to create the graphic.
  *  Functions:
  *      *Public*
  *      ->  SimpleNode(): Constructor. Initializes values for future assignations.
  *      ->  SimpleNode(T object, QString representation): Contructor. Initializes values with the object that's being holded.
  *      ->  SimpleNode *getNext(): Returns the node following it.
+ *      ->  QString getRepresentation(): Return the representation used on the graphic.
  *      ->  T *getObject(): Returns the object that's being contained on the node.
  *      ->  void setNext(SimpleNode *next): Assigns the next node.
 **/
@@ -23,6 +25,7 @@ private:
     T *Object;
     QString Representation;
     SimpleNode *Next;
+
 public:
     SimpleNode()
     {
@@ -42,6 +45,6 @@ public:
     {
         this->Next = next;
     }
-    QString getRepresentation(){ return this->Representation; }
+    QString getRepresentation() { return this->Representation; }
 };
 #endif // SIMPLENODE_H
