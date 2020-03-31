@@ -7,10 +7,12 @@
 #include "EDD/queue.h"
 #include "EDD/binarysearchtree.h"
 #include "EDD/linkedlist.h"
+#include "EDD/dispersedmatrix.h"
 using namespace std;
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
+    /*
     DoubleCircleLinkedList<QString> *doblecircular = new DoubleCircleLinkedList<QString>();
     QString *obj1 = new QString("1");
     QString *obj2 = new QString("2");
@@ -96,6 +98,38 @@ int main(int argc, char *argv[])
     QString sal = lista->GenerateGraph("Mi_lista01"); //Careful with the names. Should not use whitespace on it.
     cout << "Ruta de la imagen:" << endl;
     cout << sal.toStdString().c_str() << endl;
+*/
+    DispersedMatrix<QString> *matriz = new DispersedMatrix<QString>();
+    QString *obj1m = new QString("1");
+    QString *obj2m = new QString("2");
+    QString *obj3m = new QString("3");
+    QString *obj4m = new QString("4");
+    QString *obj5m = new QString("5");
+    QString *obj6m = new QString("6");
+    QString *obj7m = new QString("7");
+    QString *obj8m = new QString("8");
+    QString *obj9m = new QString("9");
+    QString *obj10m = new QString("10");
+    //QString *obj11m = new QString("11");
+    matriz->Add(2,2,obj1m,"X=2, Y=2",1);
+    matriz->Add(3,2,obj2m,"X=3, Y=2",1);
+    matriz->Add(4,2,obj3m,"X=4, Y=2",1);
+    matriz->Add(5,2,obj4m,"X=5, Y=2",1);
+    QString salidamatriz = matriz->GenerateGraph("Fila1");
+    cout << "Ruta de la imagen:" << endl;
+    cout << salidamatriz.toStdString().c_str() << endl;
+    matriz->Add(4,1,obj5m,"X=4, Y=1",1);
+    matriz->Add(4,3,obj6m,"X=4, Y=3",1);
+    matriz->Add(4,4,obj7m,"X=4, Y=4",1);
+    salidamatriz = matriz->GenerateGraph("Columna1");
+    cout << "Ruta de la imagen:" << endl;
+    cout << salidamatriz.toStdString().c_str() << endl;
+    matriz->Add(5,4,obj8m,"X=5, Y=4",1);
+    matriz->Add(6,4,obj9m,"X=6, Y=4",1);
+    matriz->Add(7,4,obj10m,"X=7, Y=4",1);
+    salidamatriz = matriz->GenerateGraph("Fila2");
+    cout << "Ruta de la imagen:" << endl;
+    cout << salidamatriz.toStdString().c_str() << endl;
 
     return a.exec();
 }

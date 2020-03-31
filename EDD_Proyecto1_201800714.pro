@@ -26,6 +26,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 HEADERS += \
     EDD/binarysearchtree.h \
     EDD/binarytreenode.h \
+    EDD/dispersedmatrix.h \
     EDD/doublecirclelinkedlist.h \
     EDD/doublenode.h \
     EDD/linkedlist.h \
