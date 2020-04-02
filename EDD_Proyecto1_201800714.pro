@@ -28,8 +28,11 @@ HEADERS += \
     EDD/binarytreenode.h \
     EDD/dispersedmatrix.h \
     EDD/doublecirclelinkedlist.h \
+    EDD/doublelinkedlist.h \
     EDD/doublenode.h \
     EDD/linkedlist.h \
     EDD/queue.h \
     EDD/simplenode.h \
-    grapher.h
+    chip.h \
+    grapher.h \
+    player.h

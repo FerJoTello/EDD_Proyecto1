@@ -9,7 +9,6 @@ private:
     T* Object;
     QString Representation;
 
-
 public:
     FourLinksNode *Left, *Right, *Up, *Down;
     int XPos, YPos;

@@ -114,6 +114,7 @@ public:
         return grapher->GenerateGraph(dot);
     }
 
+
 private:
     SimpleNode<T> *First, *Last;
     int Size;

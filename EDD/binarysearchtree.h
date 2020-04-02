@@ -12,6 +12,7 @@ public:
         this->Root = 0;
         this->Size = 0;
     }
+    int GetSize(){ return Size; }
     void Add(T *object, QString representation)
     {
         BinaryTreeNode<T> *newNode = new BinaryTreeNode<T>(object, representation);
@@ -45,32 +46,32 @@ public:
         Grapher *grapher = new Grapher(name);
         return grapher->GenerateGraph(dot);
     }
-    QString GeneratePreOrderGraph(QString name)
+    LinkedList<BinaryTreeNode<T>> GetPreOrder()
     {
         LinkedList<BinaryTreeNode<T>> preOrderList{};
         if (!IsEmpty())
         {
             this->AddPreOrder(Root, preOrderList);
         }
-        return preOrderList.GenerateGraph(name);
+        return preOrderList;
     }
-    QString GenerateInOrderGraph(QString name)
+    LinkedList<BinaryTreeNode<T>> GetInOrder()
     {
         LinkedList<BinaryTreeNode<T>> inOrderList{};
         if (!IsEmpty())
         {
             this->AddInOrder(Root, inOrderList);
         }
-        return inOrderList.GenerateGraph(name);
+        return inOrderList;
     }
-    QString GeneratePostOrderGraph(QString name)
+    LinkedList<BinaryTreeNode<T>> GetPostOrder()
     {
         LinkedList<BinaryTreeNode<T>> postOrderList{};
         if (!IsEmpty())
         {
             this->AddPostOrder(Root, postOrderList);
         }
-        return postOrderList.GenerateGraph(name);
+        return postOrderList;
     }
 
 private:
