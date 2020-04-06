@@ -82,59 +82,296 @@ int menu()
     {
         cout << "Selecciona una opcion:" <<endl;
         cout << "1. Leer Archivo." <<endl;
-        cout << "2. Jugar." <<endl;
-        cout << "3. Reportes." <<endl;
-        cout << "4. Salir." << endl;
+        cout << "2. Agregar Usuarios." <<endl;
+        cout << "3. Jugar." <<endl;
+        cout << "4. Reportes." << endl;
+        cout << "5. Salir." << endl;
         cin >> selection;
         if (selection == 2 && !ReadedFile)
         {
             cout << "No ha sido cargado ningun archivo de entrada." << endl;
         }
-    }while(selection<1 && selection>4 && !ReadedFile);
+    }while(selection<1 && selection>5 && !ReadedFile);
     return selection;
 }
-void newGame()
+void addChips(DoubleLinkedList<Chip> *playerChips)
 {
-    cout << "Para iniciar una partida es necesario que primero se ingrese el nombre de los jugadores." <<endl;
-    bool player1Valid = false;
-    bool player2Valid = false;
-    Player *player1;
-    Player *player2;
-    do
+    if(ChipsQueue->GetSize()>=7)
     {
-        cout << "Jugador 1, ingresa tu nombre:" << endl;
-        std::string inputName;
-        try {
-            cin >> inputName;
-            QString name = QString::fromStdString(inputName);
-            player1 = new Player(name);
-            PlayersTree->Add(player1, name);
-            player1Valid = true;
-        } catch (int a) {
-            if(a==0)
+        for(int i=0; i<7; i++)
+        {
+            Chip *dequeuedChip = ChipsQueue->GetDequeuedObject();
+            playerChips->AddLast(dequeuedChip, QString(QString(dequeuedChip->Letter) + " X %1").arg(dequeuedChip->Points));
+        }
+    }
+    else
+    {
+        if(ChipsQueue->GetSize()!=0)
+        {
+            cout << "Quedan pocas fichas en la cola" << endl;
+            while(ChipsQueue->GetSize()!=0)
             {
-                cout << "Al parecer ese usuario ya existe. No se ha podido ingresar." <<endl;
+                Chip *dequeuedChip = ChipsQueue->GetDequeuedObject();
+                playerChips->AddLast(dequeuedChip, QString(QString(dequeuedChip->Letter) + "X%1").arg(dequeuedChip->Points));
             }
         }
-    }while(!player1Valid);
-    do
-    {
-        cout << "Jugador 2, ingresa tu nombre:" << endl;
-        std::string inputName;
-        try {
-            cin >> inputName;
-            QString name = QString::fromStdString(inputName);
-            player2 = new Player(name);
-            PlayersTree->Add(player2, name);
-            player2Valid = true;
-        } catch (int a) {
-            if(a==0)
-            {
-                cout << "Al parecer ese usuario ya existe. No se ha podido ingresar." <<endl;
-            }
+        else
+        {
+            cout << "Ya no hay fichas D:" << endl;
         }
-    }while(!player2Valid);
+    }
+    //ChipsQueue->GenerateGraph("Fichas");
+}
+void returnChips(DoubleLinkedList<Chip> *playerChips)
+{
+    int originalSize = playerChips->GetSize();
+    for(int i=0; i<originalSize; i++)
+    {
+        Chip *returnedChip = playerChips->DeappendObjectAt(0);
+        ChipsQueue->Enqueue(returnedChip, returnedChip->Letter + QString(" X %1").arg(returnedChip->Points));
+    }
+}
+void newTurn(Player *player, DoubleLinkedList<Chip> *playerChips, int &points, DispersedMatrix<Chip> board)
+{
+    bool turnEnded = false;
+    while(!turnEnded)
+    {
+        playerChips->GenerateGraph("Fichas_"+player->Name);
+        int selectionPlayer1 = 0;
+        do
+        {
+            cout << "Es tu turno, " << player->Name.toStdString() << endl;
+            cout << "Escoge una opcion:" << endl;
+            cout << "1. Formar palabra." << endl;
+            cout << "2. Cambiar fichas por nuevas y terminar turno." << endl;
+            cin >> selectionPlayer1;
+        }while(selectionPlayer1<1 || selectionPlayer1>2);
+        if(selectionPlayer1==1)
+        {
+            cout << "Forma una palabra con tus fichas indicando la posicion" << endl;
+            bool placingChips = true;
+            int turnPoints = -0;
+            int *turnPointsP = &points;
+            //Indicate where the word is going to start and where is going to end (at the matrix).
+            int xStart, yStart, xEnd, yEnd;
+            //The player has to add at least 2 letters at the matrix to check the word and orientation.
+            int letters = 0;
+            board.GenerateGraph("Tablero");
+            DoubleLinkedList<Chip> placedChips;
+            LinkedList<Box> chipsPosition;
+            while(placingChips)
+            {
+                playerChips->GenerateGraph(QString("Fichas_") + player->Name);
+                int chip = -1;
+                int x = -1;
+                int y = -1;
+                cout << "Indica el numero de tu ficha" << endl;
+                cin >> chip;
+                do
+                {
+                    cout << "Indica la posicion en X de tu ficha" <<endl;
+                    cin >> x;
+                }
+                while(x<1 || x>Dimention);
+                do
+                {
+                    cout << "Indica la posicion en Y de tu ficha" <<endl;
+                    cin >> y;
+                }
+                while(y<1 || y>Dimention);
+                Chip *selectedChip = playerChips->DeappendObjectAt(chip);
+                placedChips.AddLast(selectedChip, "removed");
+                int multiplier = 1;
+                Box *newBox = new Box(x, y, 0);
+                chipsPosition.AddLast(newBox, "");
+                for(int i = 0; i < SpecialBoxes->GetSize(); i++)
+                {
+                    //Checking if the box has a multiplier.
+                    Box *checkBox = SpecialBoxes->GetObjectAt(i);
+                    if(checkBox->XPos==x && checkBox->YPos==y)
+                    {
+                        multiplier = checkBox->Multiplier;
+                        break;
+                    }
+                }
+                try
+                {
+                    board.Add(x,y,selectedChip, QString(selectedChip->Letter).toStdString(), multiplier);
+                    board.GenerateGraph("Tablero");
+                    if(letters==0)
+                    {
+                        xStart = x;
+                        yStart = y;
+                    }
+                    letters++;
+                    int input;
+                    do
+                    {
+                        cout << "Escoge entre las opciones:" << endl;
+                        cout << "1. Si quieres seguir colocando fichas" << endl;
+                        cout << "2. Para verificar que la palabra sea correcta" << endl;
+                        cin >> input;
+                    }while(input<1 || input>2);
+                    if(input==2)
+                    {
+                        placingChips=false;
+                        //validating word
+                        bool validWord = false;
+                        xEnd = x;
+                        yEnd = y;
+                        FourLinksNode<Chip> *auxChipNode = board.GetNodeAt(xStart, yStart);
+                        QString auxWord = "";
+                        if(xStart==xEnd)
+                        {
+                            //vertical
+                            bool checkingUp = true;
+                            while(auxChipNode!=0)
+                            {
+                                if(checkingUp && auxChipNode->Up->YPos!=0 && auxChipNode->Up->YPos==auxChipNode->YPos-1)
+                                {
+                                    auxChipNode = auxChipNode->Up;
+                                }
+                                else
+                                {
+                                    checkingUp = false;
+                                }
+                                //checking down
+                                if(!checkingUp)
+                                {
+                                    if (auxChipNode->AddedPreviously)
+                                    {
+                                        auxWord+= auxChipNode->getObject()->Letter;
+                                        turnPoints += auxChipNode->getObject()->Points*auxChipNode->Multiplier;
+                                    }
+                                    else if((auxChipNode->Left->XPos==0 || auxChipNode->Left->XPos!=auxChipNode->XPos-1) && (auxChipNode->Right==0 || auxChipNode->Right->XPos!=auxChipNode->XPos+1))
+                                    {
+                                        auxWord+= auxChipNode->getObject()->Letter;
+                                        turnPoints += auxChipNode->getObject()->Points*auxChipNode->Multiplier;
+                                        auxChipNode->AddedPreviously = true;
+                                    }
+                                    auxChipNode = auxChipNode->Down;
+                                }
+                            }
+                        }
 
+                        else if(yStart==yEnd)
+                        {
+                            bool checkingLeft = true;
+                            while(auxChipNode!=0)
+                            {
+                                if(checkingLeft && auxChipNode->Left->XPos!=0 && auxChipNode->Left->XPos==auxChipNode->XPos-1)
+                                {
+                                    auxChipNode = auxChipNode->Left;
+                                }
+                                else
+                                {
+                                    checkingLeft = false;
+                                }
+                                //checking right
+                                if(!checkingLeft)
+                                {
+                                    if (auxChipNode->AddedPreviously)
+                                    {
+                                        auxWord+= auxChipNode->getObject()->Letter;
+                                        turnPoints += auxChipNode->getObject()->Points*auxChipNode->Multiplier;
+                                    }
+                                    else if((auxChipNode->Up->YPos==0 || auxChipNode->Up->YPos!=auxChipNode->YPos-1) && (auxChipNode->Down==0 || auxChipNode->Down->YPos!=auxChipNode->YPos+1))
+                                    {
+                                        auxWord+= auxChipNode->getObject()->Letter;
+                                        turnPoints += auxChipNode->getObject()->Points*auxChipNode->Multiplier;
+                                        auxChipNode->AddedPreviously = true;
+                                    }
+                                    auxChipNode = auxChipNode->Right;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            //undefined (not valid)
+                            cout << "Las fichas que colocaste no presentan un orden valido" << endl;
+                            cout << "No se pudo validar tu palabra" <<endl;
+                            int originalSize = placedChips.GetSize();
+                            for(int i=0; i<originalSize; i++)
+                            {
+                                Chip *auxChip = placedChips.GetObjectAt(i);
+                                playerChips->AddLast(auxChip, QString(auxChip->Letter) + QString("X%1").arg(auxChip->Points));
+                            }
+                        }
+                        DoubleNode<QString> *auxDictionaryNode = Dictionary->First;
+                        //checkig if the word is on the dictionary
+                        int count = 0;
+                        while(count!=Dictionary->GetSize())
+                        {
+                            QString *dictionaryWord = auxDictionaryNode->getObject();
+                            if(auxWord.compare(dictionaryWord) == 0)
+                            {
+                                validWord = true;
+                                break;
+                            }
+                            auxDictionaryNode = auxDictionaryNode->getNext();
+                            count++;
+                        }
+                        if(validWord)
+                        {
+                            cout << "La palabra: " << auxWord.toStdString() << ", es valida" << endl;
+                            cout << "Tus fichas sobrantes se agregaran a la cola y se te asignaran unas nuevas" <<endl;
+                            points += turnPoints;
+                            player->ScoreHistory->AddFirst(turnPointsP, QString("%1").arg(points));
+                            returnChips(playerChips);
+                            addChips(playerChips);
+                            ChipsQueue->GenerateGraph("Fichas");
+                            turnEnded = true;
+                        }
+                        else
+                        {
+                            cout << "La palabra: " << auxWord.toStdString() << ", no es valida" << endl;
+                            int originalSize = placedChips.GetSize();
+                            for(int i=0; i<originalSize; i++)
+                            {
+                                Chip *auxChip = placedChips.GetObjectAt(i);
+                                playerChips->AddLast(auxChip, QString(auxChip->Letter) + QString("X%1").arg(auxChip->Points));
+                            }
+                            SimpleNode<Box> *removedChip = chipsPosition.First;
+                            while(removedChip!=0)
+                            {
+                                board.DeleteAt(removedChip->getObject()->XPos, removedChip->getObject()->YPos);
+                                removedChip = removedChip->getNext();
+                            }
+                        }
+                    }
+                    else if(input==1)
+                    {
+                        placingChips=true;
+                    }
+                }
+                catch (int e)
+                {
+                    //continues on placing chips
+                    if(e==-1)
+                    {
+                        cout << "Ya hay una ficha en esa posicion" <<endl;
+                        cout << "Debes de indicar nuevamente tu ficha y su posicion" <<endl;
+                        playerChips->AddLast(selectedChip, QString(QString(selectedChip->Letter) + "X%1").arg(selectedChip->Points));
+                    }
+                }
+            }
+        }
+        else if(selectionPlayer1==2)
+        {
+            returnChips(playerChips);
+            addChips(playerChips);
+            ChipsQueue->GenerateGraph("Fichas");
+            turnEnded=true;
+        }
+    }
+}
+void debugGame()
+{
+    cout << "Para iniciar una partida es necesario que primero selecciones tu usuario. Ingresa el numero de tu usuario." <<endl;
+    LinkedList<BinaryTreeNode<Player>> inorder = PlayersTree->GetInOrder();
+    inorder.GenerateGraph("Usuarios");
+    Player *player1 = inorder.GetObjectAt(0)->getObject();
+    Player *player2 = inorder.GetObjectAt(1)->getObject();
     Chip *chips[94];
     chips[0] = new Chip(1, 'a');
     chips[1] = new Chip(1, 'a');
@@ -230,6 +467,200 @@ void newGame()
     chips[91] = new Chip(8, 'j');//
     chips[92] = new Chip(8, 'x');//
     chips[93] = new Chip(10, 'z');//
+
+    ChipsQueue->Enqueue(chips[78], QString(chips[78]->Letter) + QString(" X %1").arg(chips[78]->Points));
+    ChipsQueue->Enqueue(chips[0], QString(chips[0]->Letter) + QString(" X %1").arg(chips[0]->Points));
+    ChipsQueue->Enqueue(chips[45], QString(chips[45]->Letter) + QString(" X %1").arg(chips[45]->Points));
+    ChipsQueue->Enqueue(chips[51], QString(chips[51]->Letter) + QString(" X %1").arg(chips[51]->Points));
+    ChipsQueue->Enqueue(chips[1], QString(chips[1]->Letter) + QString(" X %1").arg(chips[1]->Points));
+    ChipsQueue->Enqueue(chips[46], QString(chips[46]->Letter) + QString(" X %1").arg(chips[46]->Points));
+    ChipsQueue->Enqueue(chips[2], QString(chips[2]->Letter) + QString(" X %1").arg(chips[2]->Points));
+    ChipsQueue->Enqueue(chips[3], QString(chips[3]->Letter) + QString(" X %1").arg(chips[3]->Points));//primero
+    ChipsQueue->Enqueue(chips[83], QString(chips[83]->Letter) + QString(" X %1").arg(chips[83]->Points));
+    ChipsQueue->Enqueue(chips[12], QString(chips[12]->Letter) + QString(" X %1").arg(chips[12]->Points));
+    ChipsQueue->Enqueue(chips[93], QString(chips[93]->Letter) + QString(" X %1").arg(chips[93]->Points));
+    ChipsQueue->Enqueue(chips[85], QString(chips[85]->Letter) + QString(" X %1").arg(chips[85]->Points));
+    ChipsQueue->Enqueue(chips[24], QString(chips[24]->Letter) + QString(" X %1").arg(chips[24]->Points));
+    ChipsQueue->Enqueue(chips[52], QString(chips[52]->Letter) + QString(" X %1").arg(chips[52]->Points));    //segundo
+    DoubleLinkedList<Chip> *player1Chips = new DoubleLinkedList<Chip>();
+    DoubleLinkedList<Chip> *player2Chips = new DoubleLinkedList<Chip>();
+    addChips(player1Chips);
+    addChips(player2Chips);
+    DispersedMatrix<Chip> board;
+    /*
+    board.Add(1,1,chips[75], QString(chips[75]->Letter).toStdString(), 3);
+    board.Add(2,1,chips[4], QString(chips[4]->Letter).toStdString(), 1);
+    board.Add(3,1,chips[47], QString(chips[47]->Letter).toStdString(), 3);
+    board.Add(5,3,chips[84], QString(chips[84]->Letter).toStdString(), 1);
+    board.Add(6,3,chips[13], QString(chips[13]->Letter).toStdString(), 1);
+    board.Add(7,3,chips[93], QString(chips[93]->Letter).toStdString(), 3);
+    board.Add(6,7,chips[50], QString(chips[50]->Letter).toStdString(), 1);
+    board.Add(6,8,chips[5], QString(chips[5]->Letter).toStdString(), 1);
+    board.Add(6,9,chips[47], QString(chips[47]->Letter).toStdString(), 1);
+    board.Add(6,10,chips[6], QString(chips[6]->Letter).toStdString(), 3);
+    */
+    int initialTurn = myrandom(2) + 1;
+    //turn1 determines if the player1 has the initial turn. if don't the turn is for player2.
+    bool turn1 = false;
+    bool gameEnded = false;
+    if(initialTurn==1)
+    {
+        turn1 = true;
+    }
+    //game starts
+    int points1 = 0;
+    int points2 = 0;
+    do
+    {
+        cout << "Puntos de " << player1->Name.toStdString() <<": " << points1 <<endl;
+        cout << "Puntos de " << player2->Name.toStdString() <<": " << points2 <<endl;
+        cout << "Escoge entre las opciones:\n1. Colocar ficha.\n2. Terminar partida." << endl;
+        int selection = 0;
+        cin >> selection;
+        if(selection==1 && turn1)
+        {
+            newTurn(player1,player1Chips,points1,board);
+        }
+        else if(selection==1 && !turn1)
+        {
+            newTurn(player2,player2Chips,points2,board);
+        }
+        else if(selection==2)
+        {
+            gameEnded=true;
+        }
+        turn1 = !turn1;
+    }while(!gameEnded);
+    if(points1>points2)
+    {
+        cout << "El ganador es: " << player1->Name.toStdString() <<". Con " << points1 << " puntos!"<<endl;
+    }
+    else if(points1<points2)
+    {
+        cout << "El ganador es: " << player2->Name.toStdString() <<". Con " << points2 << " puntos!"<<endl;
+    }
+    else
+    {
+        cout << "Hay empate!" << endl;
+    }
+    cout << "Buen juego :D" << endl;
+}
+void newGame()
+{
+    cout << "Para iniciar una partida es necesario que primero selecciones tu usuario." <<endl;
+    LinkedList<BinaryTreeNode<Player>> inorder = PlayersTree->GetInOrder();
+    inorder.GenerateGraph("Usuarios");
+    int selection1, selection2;
+    do
+    {
+        cout << "Jugador 1, selecciona tu usuario" <<endl;
+        cin >> selection1;
+    }
+    while(selection1<0 || selection1>=PlayersTree->GetSize());
+    Player *player1 = inorder.GetObjectAt(selection1)->getObject();
+    do
+    {
+        cout << "Jugador 2, selecciona tu usuario" <<endl;
+        cin >> selection2;
+    }
+    while(selection2<0 || selection2>=PlayersTree->GetSize() || selection1==selection2);
+    Player *player2 = inorder.GetObjectAt(selection2)->getObject();
+    Chip *chips[94];
+    chips[0] = new Chip(1, 'a');
+    chips[1] = new Chip(1, 'a');
+    chips[2] = new Chip(1, 'a');
+    chips[3] = new Chip(1, 'a');
+    chips[4] = new Chip(1, 'a');
+    chips[5] = new Chip(1, 'a');
+    chips[6] = new Chip(1, 'a');
+    chips[7] = new Chip(1, 'a');
+    chips[8] = new Chip(1, 'a');
+    chips[9] = new Chip(1, 'a');
+    chips[10] = new Chip(1, 'a');
+    chips[11] = new Chip(1, 'a');//
+    chips[12] = new Chip(1, 'e');
+    chips[13] = new Chip(1, 'e');
+    chips[14] = new Chip(1, 'e');
+    chips[15] = new Chip(1, 'e');
+    chips[16] = new Chip(1, 'e');
+    chips[17] = new Chip(1, 'e');
+    chips[18] = new Chip(1, 'e');
+    chips[19] = new Chip(1, 'e');
+    chips[20] = new Chip(1, 'e');
+    chips[21] = new Chip(1, 'e');
+    chips[22] = new Chip(1, 'e');
+    chips[23] = new Chip(1, 'e');//
+    chips[24] = new Chip(1, 'o');
+    chips[25] = new Chip(1, 'o');
+    chips[26] = new Chip(1, 'o');
+    chips[27] = new Chip(1, 'o');
+    chips[28] = new Chip(1, 'o');
+    chips[29] = new Chip(1, 'o');
+    chips[30] = new Chip(1, 'o');
+    chips[31] = new Chip(1, 'o');
+    chips[32] = new Chip(1, 'o');//
+    chips[33] = new Chip(1, 'i');
+    chips[34] = new Chip(1, 'i');
+    chips[35] = new Chip(1, 'i');
+    chips[36] = new Chip(1, 'i');
+    chips[37] = new Chip(1, 'i');
+    chips[38] = new Chip(1, 'i');//
+    chips[39] = new Chip(1, 's');
+    chips[40] = new Chip(1, 's');
+    chips[41] = new Chip(1, 's');
+    chips[42] = new Chip(1, 's');
+    chips[43] = new Chip(1, 's');
+    chips[44] = new Chip(1, 's');//
+    chips[45] = new Chip(1, 'n');
+    chips[46] = new Chip(1, 'n');
+    chips[47] = new Chip(1, 'n');
+    chips[48] = new Chip(1, 'n');
+    chips[49] = new Chip(1, 'n');//
+    chips[50] = new Chip(1, 'l');
+    chips[51] = new Chip(1, 'l');
+    chips[52] = new Chip(1, 'l');
+    chips[53] = new Chip(1, 'l');//
+    chips[54] = new Chip(1, 'r');
+    chips[55] = new Chip(1, 'r');
+    chips[56] = new Chip(1, 'r');
+    chips[57] = new Chip(1, 'r');
+    chips[58] = new Chip(1, 'r');//
+    chips[59] = new Chip(1, 'u');
+    chips[60] = new Chip(1, 'u');
+    chips[61] = new Chip(1, 'u');
+    chips[62] = new Chip(1, 'u');
+    chips[63] = new Chip(1, 'u');//
+    chips[64] = new Chip(1, 't');
+    chips[65] = new Chip(1, 't');
+    chips[66] = new Chip(1, 't');
+    chips[67] = new Chip(1, 't');//
+    chips[68] = new Chip(2, 'd');
+    chips[69] = new Chip(2, 'd');
+    chips[70] = new Chip(2, 'd');
+    chips[71] = new Chip(2, 'd');
+    chips[72] = new Chip(2, 'd');//
+    chips[73] = new Chip(2, 'g');
+    chips[74] = new Chip(2, 'g');//
+    chips[75] = new Chip(3, 'c');
+    chips[76] = new Chip(3, 'c');
+    chips[77] = new Chip(3, 'c');
+    chips[78] = new Chip(3, 'c');//
+    chips[79] = new Chip(3, 'b');
+    chips[80] = new Chip(3, 'b');//
+    chips[81] = new Chip(3, 'm');
+    chips[82] = new Chip(3, 'm');//
+    chips[83] = new Chip(3, 'p');
+    chips[84] = new Chip(3, 'p');//
+    chips[85] = new Chip(4, 'h');
+    chips[86] = new Chip(4, 'h');//
+    chips[87] = new Chip(4, 'f');//
+    chips[88] = new Chip(4, 'v');//
+    chips[89] = new Chip(4, 'y');//
+    chips[90] = new Chip(5, 'q');//
+    chips[91] = new Chip(8, 'j');//
+    chips[92] = new Chip(8, 'x');//
+    chips[93] = new Chip(10, 'z');//
+
     //VECTOR UTILIZADO UNICAMENTE PARA OBTENER FUNCION RANDOM_SHUFFLE
     //QUE ES CAPAZ DE ORDENAR LOS ELEMENTOS DE UN VECTOR DE FORMA ALEATORIA.
     std::vector<int> myvector;
@@ -253,151 +684,123 @@ void newGame()
     ChipsQueue->GenerateGraph("Fichas");
     DoubleLinkedList<Chip> *player1Chips = new DoubleLinkedList<Chip>();
     DoubleLinkedList<Chip> *player2Chips = new DoubleLinkedList<Chip>();
-    for(int i=0; i<7; i++)
+    addChips(player1Chips);
+    addChips(player2Chips);
+    DispersedMatrix<Chip> board;
+    int initialTurn = myrandom(2) + 1;
+    //turn1 determines if the player1 has the initial turn. if don't the turn is for player2.
+    bool turn1 = false;
+    bool gameEnded = false;
+    if(initialTurn==1)
     {
-        Chip *dequeuedChip = ChipsQueue->GetDequeuedObject();
-        player1Chips->AddLast(dequeuedChip, QString(QString(dequeuedChip->Letter) + "X%1").arg(dequeuedChip->Points));
+        turn1 = true;
     }
-    player1Chips->GenerateGraph("Fichas_Jugador_1");
-    for(int i=0; i<7; i++)
+    //game starts
+    int points1 = 0;
+    int points2 = 0;
+    do
     {
-        Chip *dequeuedChip = ChipsQueue->GetDequeuedObject();
-        player2Chips->AddLast(dequeuedChip, QString(QString(dequeuedChip->Letter) + "X%1").arg(dequeuedChip->Points));
+        cout << "Puntos de " << player1->Name.toStdString() <<": " << points1 <<endl;
+        cout << "Puntos de " << player2->Name.toStdString() <<": " << points2 <<endl;
+        cout << "Escoge entre las opciones:\n1. Colocar ficha.\n2. Terminar partida." << endl;
+        int selection = 0;
+        cin >> selection;
+        if(selection==1 && turn1)
+        {
+            newTurn(player1,player1Chips,points1,board);
+        }
+        else if(selection==1 && !turn1)
+        {
+            newTurn(player2,player2Chips,points2,board);
+        }
+        else if(selection==2)
+        {
+            gameEnded=true;
+        }
+        turn1 = !turn1;
+    }while(!gameEnded);
+    if(points1>points2)
+    {
+        cout << "El ganador es: " << player1->Name.toStdString() <<". Con " << points1 << " puntos!"<<endl;
     }
-    player2Chips->GenerateGraph("Fichas_Jugador_2");
-
+    else if(points1<points2)
+    {
+        cout << "El ganador es: " << player2->Name.toStdString() <<". Con " << points2 << " puntos!"<<endl;
+    }
+    else
+    {
+        cout << "Hay empate!" << endl;
+    }
+    cout << "Buen juego :D" << endl;
 }
 void reports()
 {
+    int selection;
+    do
+    {
+        cout << "Para ver reportes, selecciona un numero" << endl;
+        cout << "1. Diccionario (Doble Circular)." << endl;
+        cout << "2. Usuarios (Arbol binario)" << endl;
+        cout << "3. Recorrido Preorder" << endl;
+        cout << "4. Recorrido Inorder" << endl;
+        cout << "5. Recorrido Postorder" << endl;
+        cout << "6. Historial de puntajes (Lista Simple Ordenada)" << endl;
+        cout << "7. Scoreboard (Lista Simple Ordenada)" << endl;
+        cin >> selection;
+    }
+    while(selection<1 || selection>7);
+    switch(selection)
+    {
+    case 1:
+        Dictionary->GenerateGraph("Diccionario");
+    break;
+    case 2:
+        PlayersTree->GenerateTreeGraph("Usuarios");
+    break;
+    case 3:
+        PlayersTree->GetPreOrder().GenerateGraph("Usuarios_PreOrder");
+    break;
+    case 4:
+        PlayersTree->GetInOrder().GenerateGraph("Usuarios_InOrder");
+    break;
+    case 5:
+        PlayersTree->GetPostOrder().GenerateGraph("Usuarios_PostOrder");
+    break;
+    case 6:{
+        int player;
+        do
+        {
+            cout << "De la lista InOrder indica la posicion del usuario" << endl;
+            cin >> player;
+        }
+        while(player<0 || player>=PlayersTree->GetSize());
+        Player *selectedPlayer = PlayersTree->GetInOrder().GetObjectAt(player)->getObject();
+        selectedPlayer->ScoreHistory->GenerateGraph(QString("Puntajes_") + selectedPlayer->Name);
+    }
+        break;
+    case 7:
 
+        BinarySearchTree<Player> *scoreboardTree = new BinarySearchTree<Player>();
+        LinkedList<BinaryTreeNode<Player>> inorder = PlayersTree->GetInOrder();
+        for(int i = 0; i < inorder.GetSize(); i++)
+        {
+            Player *aPlayer = inorder.GetObjectAt(i)->getObject();
+            int *value = aPlayer->ScoreHistory->GetObjectAt(0);
+            scoreboardTree->Add(aPlayer, QString("%1puntos: ").arg(*value) + aPlayer->Name);
+        }
+        scoreboardTree->GetInOrder().GenerateGraph("Scoreboard");
+    break;
+
+    }
 }
 int main(int argc, char *argv[])
 {
     std::srand(std::time(0));
     QCoreApplication a(argc, argv);
-    /*
-    DoubleCircleLinkedList<QString> *doblecircular = new DoubleCircleLinkedList<QString>();
-    QString *obj1 = new QString("1");
-    QString *obj2 = new QString("2");
-    QString *obj3 = new QString("3");
-    QString *obj4 = new QString("4");
-    QString *obj5 = new QString("5");
-    QString *obj6 = new QString("6");
-    doblecircular->AddFirst(obj1, "es");
-    doblecircular->AddLast(obj2, "una");
-    doblecircular->AddFirst(obj3, "Esto");
-    doblecircular->AddLast(obj4, "lista");
-    doblecircular->AddAt(obj5, "nueva", 3);
-    doblecircular->AddAt(obj6, ":v", 5);
-    QString salida = doblecircular->GenerateGraph("Mi_DCLL01"); //Careful with the names. Should not use whitespace on it.
-    cout << "Ruta de la imagen:" << endl;
-    cout << salida.toStdString().c_str() << endl;
-
-    Queue<QString> *cola = new Queue<QString>();
-    QString *obj11 = new QString("1");
-    QString *obj21 = new QString("2");
-    QString *obj31 = new QString("3");
-    QString *obj41 = new QString("4");
-    QString *obj51 = new QString("5");
-    QString *obj61 = new QString("6");
-    cola->Enqueue(obj11, "Esto");
-    cola->Enqueue(obj21, "es");
-    cola->Enqueue(obj31, "una");
-    cola->Enqueue(obj41, "nueva");
-    cola->Enqueue(obj51, "cola");
-    cola->Enqueue(obj61, ":v");
-    QString salidax = cola->GenerateGraph("Mi_Cola01"); //Careful with the names. Should not use whitespace on it.
-    cout << "Ruta de la imagen:" << endl;
-    cout << salidax.toStdString().c_str() << endl;
-    cola->GetDequeuedObject();
-    cola->GetDequeuedObject();
-    QString salid2 = cola->GenerateGraph("Mi_Cola02"); //Careful with the names. Should not use whitespace on it.
-    cout << "Ruta de la imagen:" << endl;
-    cout << salid2.toStdString().c_str() << endl;
-
-    BinarySearchTree<QString> *arbol = new BinarySearchTree<QString>();
-    QString *obj12 = new QString("1");
-    QString *obj22 = new QString("2");
-    QString *obj32 = new QString("3");
-    QString *obj42 = new QString("4");
-    QString *obj52 = new QString("5");
-    QString *obj62 = new QString("6");
-    QString *obj72 = new QString("7");
-    QString *obj82 = new QString("8");
-    arbol->Add(obj12, "Pablo");
-    arbol->Add(obj22, "Andres");
-    arbol->Add(obj32, "Fernando");
-    arbol->Add(obj42, "Josue");
-    arbol->Add(obj52, "Sergio");
-    arbol->Add(obj62, "Carlos");
-    arbol->Add(obj72, "Kevin");
-    arbol->Add(obj82, "Zucely");
-    QString salidaArbol = arbol->GenerateTreeGraph("Mi_Arbol02");
-    cout << "Ruta de la imagen:" << endl;
-    cout << salidaArbol.toStdString().c_str() << endl;
-    QString salidaArbolPreOrder = arbol->GeneratePreOrderGraph("Mi_PreOrder02");
-    cout << "Ruta de la imagen:" << endl;
-    cout << salidaArbolPreOrder.toStdString().c_str() << endl;
-    QString salidaArbolInOrder = arbol->GenerateInOrderGraph("Mi_InOrder02");
-    cout << "Ruta de la imagen:" << endl;
-    cout << salidaArbolInOrder.toStdString().c_str() << endl;
-    QString salidaArbolPostOrder = arbol->GeneratePostOrderGraph("Mi_PostOrder02");
-    cout << "Ruta de la imagen:" << endl;
-    cout << salidaArbolPostOrder.toStdString().c_str() << endl;
-
-    LinkedList<QString> *lista = new LinkedList<QString>();
-    QString *obj10 = new QString("1");
-    QString *obj20 = new QString("2");
-    QString *obj30 = new QString("3");
-    QString *obj40 = new QString("4");
-    QString *obj50 = new QString("5");
-    QString *obj60 = new QString("6");
-    lista->AddFirst(obj10, "es");
-    lista->AddLast(obj20, "una");
-    lista->AddFirst(obj30, "Esto");
-    lista->AddLast(obj40, "lista");
-    lista->AddAt(obj50, "nueva", 3);
-    lista->AddAt(obj60, ":v", 5);
-    QString sal = lista->GenerateGraph("Mi_lista01"); //Careful with the names. Should not use whitespace on it.
-    cout << "Ruta de la imagen:" << endl;
-    cout << sal.toStdString().c_str() << endl;
-
-    DispersedMatrix<QString> *matriz = new DispersedMatrix<QString>();
-    QString *obj1m = new QString("1");
-    QString *obj2m = new QString("2");
-    QString *obj3m = new QString("3");
-    QString *obj4m = new QString("4");
-    QString *obj5m = new QString("5");
-    QString *obj6m = new QString("6");
-    QString *obj7m = new QString("7");
-    QString *obj8m = new QString("8");
-    QString *obj9m = new QString("9");
-    QString *obj10m = new QString("10");
-    //QString *obj11m = new QString("11");
-    matriz->Add(2,2,obj1m,"X=2, Y=2",1);
-    matriz->Add(3,2,obj2m,"X=3, Y=2",1);
-    matriz->Add(4,2,obj3m,"X=4, Y=2",1);
-    matriz->Add(5,2,obj4m,"X=5, Y=2",1);
-    QString salidamatriz = matriz->GenerateGraph("Fila1");
-    cout << "Ruta de la imagen:" << endl;
-    cout << salidamatriz.toStdString().c_str() << endl;
-    matriz->Add(4,1,obj5m,"X=4, Y=1",1);
-    matriz->Add(4,3,obj6m,"X=4, Y=3",1);
-    matriz->Add(4,4,obj7m,"X=4, Y=4",1);
-    salidamatriz = matriz->GenerateGraph("Columna1");
-    cout << "Ruta de la imagen:" << endl;
-    cout << salidamatriz.toStdString().c_str() << endl;
-    matriz->Add(5,4,obj8m,"X=5, Y=4",1);
-    matriz->Add(6,4,obj9m,"X=6, Y=4",1);
-    matriz->Add(7,4,obj10m,"X=7, Y=4",1);
-    salidamatriz = matriz->GenerateGraph("Fila2");
-    cout << "Ruta de la imagen:" << endl;
-    cout << salidamatriz.toStdString().c_str() << endl;
-*/
     int selection = -1;
     cout << "Este es un proyecto realizado por Fernando Tello - 201800714" <<endl;
     cout << "Bienvenido a Scrabble++" <<endl;
-    while(selection != 4)
+    while(selection != 5)
     {
         selection = menu();
         switch (selection)
@@ -408,13 +811,32 @@ int main(int argc, char *argv[])
             ReadedFile = true;
             cout << "*Se ha leido el archivo de entrada*" <<endl;
             break;
-        case 2:
-            if(ReadedFile)
-            {
-                newGame();
+        case 2:{
+            cout << "Coloca el nombre de tu usuario" << endl;
+            string name;
+            cin >> name;
+            Player *newPlayer = new Player(QString(name.c_str()));
+            try {
+                PlayersTree->Add(newPlayer, QString(name.c_str()));
+            } catch (int a) {
+                cout << "Ya existe un usuario con ese nombre" <<endl;
             }
+        }
             break;
         case 3:
+            if(ReadedFile)
+            {
+                if(PlayersTree->GetSize()>=2)
+                {
+                    newGame();
+                }
+                else
+                {
+                    cout << "Parece ser que no hay suficientes usuarios creados. Crea uno nuevo." << endl;
+                }
+            }
+            break;
+        case 4:
             reports();
             break;
         }

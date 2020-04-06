@@ -79,9 +79,13 @@ public:
             throw index;
         }
     }
-    T GetObjectAt(int index)
+    T *GetObjectAt(int index)
     {
         return GetNodeAt(index)->getObject();
+    }
+    T *DeappendObjectAt(int index)
+    {
+        return DeappendNodeAt(index)->getObject();
     }
     QString GenerateGraph(QString name)
     {
@@ -135,6 +139,7 @@ public:
         return grapher->GenerateGraph(dot);
     }
 
+
 private:
     DoubleNode<T> *First, *Last;
     int Size;
@@ -163,6 +168,68 @@ private:
         else if (index == this->GetSize() - 1)
         {
             return Last;
+        }
+        else
+        {
+            //Posible exception. The index is out of bounds.
+            throw index;
+        }
+    }
+    DoubleNode<T> *DeappendNodeAt(int index)
+    {
+        if (index > 0 && index < GetSize() - 1)
+        {
+            int count = 0;
+            DoubleNode<T> *auxNode = First;
+            //Advancing in the list to obtain the required auxNode
+            while (count != index)
+            {
+                auxNode = auxNode->getNext();
+                count++;
+            }
+            if(auxNode->getPrev()!=0)
+            {
+                auxNode->getNext()->setPrev(auxNode->getPrev());
+            }
+            else
+            {
+                auxNode->getNext()->setPrev(0);
+            }
+            if(auxNode->getNext()!=0)
+            {
+                auxNode->getPrev()->setNext(auxNode->getNext());
+            }
+            else
+            {
+                auxNode->getPrev()->setNext(0);
+            }
+
+            this->Size--;
+            return auxNode;
+        }
+        else if (index == 0)
+        {
+            this->Size--;
+            DoubleNode<T> *aux = First;
+            First = First->getNext();
+            if(Size!=0)
+            {
+                First->setPrev(0);
+            }
+            else if(Size==0)
+            {
+                First = 0;
+                Last = 0;
+            }
+            return aux;
+        }
+        else if (index == this->GetSize() - 1)
+        {
+            DoubleNode<T> *aux = Last;
+            Last = Last->getPrev();
+            Last->setNext(0);
+            this->Size--;
+            return aux;
         }
         else
         {

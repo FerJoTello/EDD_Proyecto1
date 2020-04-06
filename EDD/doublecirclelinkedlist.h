@@ -11,6 +11,7 @@ template <class T>
 class DoubleCircleLinkedList
 {
 public:
+    DoubleNode<T> *First, *Last;
     DoubleCircleLinkedList()
     {
         First = 0;
@@ -149,7 +150,6 @@ public:
     }
 
 private:
-    DoubleNode<T> *First, *Last;
     int Size;
     bool IsEmpty()
     {

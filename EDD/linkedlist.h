@@ -6,6 +6,7 @@ template <class T>
 class LinkedList
 {
 public:
+    SimpleNode<T> *First, *Last;
     LinkedList()
     {
         First = 0;
@@ -114,9 +115,8 @@ public:
         return grapher->GenerateGraph(dot);
     }
 
-
 private:
-    SimpleNode<T> *First, *Last;
+
     int Size;
     bool IsEmpty()
     {

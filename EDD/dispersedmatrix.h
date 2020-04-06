@@ -1,18 +1,21 @@
 #ifndef FOURLINKSNODE_H
 #define FOURLINKSNODE_H
 #include <QString>
+#include <string>
+#include "EDD/linkedlist.h"
 #include "../grapher.h"
 template <class T>
 class FourLinksNode
 {
 private:
-    T* Object;
-    QString Representation;
+    T *Object;
+    std::string Representation;
 
 public:
     FourLinksNode *Left, *Right, *Up, *Down;
     int XPos, YPos;
     int Multiplier;
+    bool AddedPreviously;
     FourLinksNode()
     {
         Left = Right = Up = Down = 0;
@@ -20,17 +23,19 @@ public:
         Representation = "";
         XPos = YPos = -1;
         Multiplier = -1;
+        AddedPreviously = false;
     }
-    FourLinksNode(T* object, QString representation, int multiplier)
+    FourLinksNode(T *object, std::string representation, int multiplier)
     {
         Object = object;
         Representation = representation;
         Left = Right = Up = Down = 0;
         XPos = YPos = -1;
         Multiplier = multiplier;
+        AddedPreviously = false;
     }
     T *getObject() { return this->Object; }
-    QString getRepresentation() { return this->Representation; }
+    std::string getRepresentation() { return this->Representation; }
 
 };
 #endif //FOURLINKSNODE_H
@@ -47,7 +52,7 @@ public:
         Head->XPos = 0;
         Head->YPos = 0;
     }
-    void Add(int x, int y, T* object, QString representation, int multiplier)
+    void Add(int x, int y, T *object, std::string representation, int multiplier)
     {
         FourLinksNode<T> *newNode = new FourLinksNode<T>(object, representation, multiplier);
         //CheckX
@@ -89,7 +94,7 @@ public:
             {
 
                 QString gNode = QString("\tn%1").arg(columnNode->XPos) + QString("_%1").arg(columnNode->YPos); //Appends "n" with XPos and YPos (gNode = "n0_0").
-                QString object = columnNode->getRepresentation();
+                QString object = columnNode->getRepresentation().c_str();
                 if(columnNode->Multiplier==1)
                 {
                     dot += gNode + QString("[label = \"" + object + "\" color = 8 group = %1];\n").arg(columnNode->XPos);
@@ -120,7 +125,14 @@ public:
                 }
                 if(columnNode->Down!=0)
                 {
-                    dot += "\t" + gNode + " -> " + QString("n%1").arg(columnNode->Down->XPos) + QString("_%1").arg(columnNode->Down->YPos)+ ";\n"; //Appends gNode with his down.
+                    if(columnNode->Down->XPos==0)
+                    {
+                        dot += "\t" + gNode + " -> " + QString("n%1").arg(columnNode->Down->XPos) + QString("_%1").arg(columnNode->Down->YPos)+ ";\n"; //Appends gNode with his down.
+                    }
+                    else if(columnNode->Down->XPos>0)
+                    {
+                        dot += "\t" + gNode + " -> " + QString("n%1").arg(columnNode->Down->XPos) + QString("_%1").arg(columnNode->Down->YPos)+ "[constraint = false];\n"; //Appends gNode with his down.
+                    }
                 }
                 rowGroup += gNode;
                 columnNode = columnNode->Right; //Repeats with the next node.
@@ -132,6 +144,60 @@ public:
         dot += "}";
         Grapher *grapher = new Grapher(name);
         return grapher->GenerateGraph(dot);
+    }
+    FourLinksNode<T> *GetNodeAt(int xstart, int ystart)
+    {
+        FourLinksNode<T> *columnNode = GetAuxX(Head, xstart + 1);           //columnNode is the column where the node requested was placed (since it's necessary to have the exact column, the index is 1 greater -> 'x + 1').
+        FourLinksNode<T> *requestedNode = GetAuxY(columnNode, ystart + 1);  //requested node (since it's necessary to have the exact column, the index is 1 greater -> 'x + 1').
+        return requestedNode;
+    }
+    void DeleteAt(int x, int y)
+    {
+        FourLinksNode<T> *columnNode = GetAuxX(Head, x + 1);        //columnNode is the column where the newNode is going to be added (since it's necessary to have the exact column, the index is 1 greater -> 'x + 1').
+        FourLinksNode<T> *auxYNode = GetAuxY(columnNode, y +1);
+        if(auxYNode->Right!=0)
+        {
+            auxYNode->Right->Left=auxYNode->Left;
+            auxYNode->Left->Right=auxYNode->Right;
+        }
+        else if(auxYNode->Right==0)
+        {
+            auxYNode->Left->Right=0;
+        }
+        if(auxYNode->Down!=0)
+        {
+            auxYNode->Down->Up=auxYNode->Up;
+            auxYNode->Up->Down=auxYNode->Down;
+        }
+        else if(auxYNode->Down==0)
+        {
+            auxYNode->Up->Down=0;
+        }
+        if(columnNode->Down==0)
+        {
+            if(columnNode->Right!=0)
+            {
+                columnNode->Right->Left=columnNode->Left;
+                columnNode->Left->Right=columnNode->Right;
+            }
+            else if (columnNode->Right==0)
+            {
+                columnNode->Left->Right=0;
+            }
+        }
+        FourLinksNode<T> *rowNode = GetAuxY(Head, y + 1);
+        if(rowNode->Right==0)
+        {
+            if(rowNode->Down!=0)
+            {
+                rowNode->Down->Up=rowNode->Up;
+                rowNode->Up->Down=rowNode->Down;
+            }
+            else if (rowNode->Down==0)
+            {
+                rowNode->Up->Down=0;
+            }
+        }
     }
 
 private:
@@ -162,25 +228,25 @@ private:
     {
         //auxNode is the previous node according index 'x'
         FourLinksNode<T> *auxNode = GetAuxX(Head, x);
-        FourLinksNode<T> *newNode = new FourLinksNode<T>(0, QString("X=%1").arg(x), -1);
+        FourLinksNode<T> *newNode = new FourLinksNode<T>(0, QString("X=%1").arg(x).toStdString(), -1);
         AddX(newNode, x, 0, auxNode);
     }
     void CheckY(int y)
     {
         //auxNode is the previous node according index 'y'
         FourLinksNode<T> *auxNode = GetAuxY(Head, y);
-        FourLinksNode<T> *newNode = new FourLinksNode<T>(0, QString("Y=%1").arg(y), -1);
+        FourLinksNode<T> *newNode = new FourLinksNode<T>(0, QString("Y=%1").arg(y).toStdString(), -1);
         AddY(newNode, 0, y, auxNode);
     }
     void Insert(int x, int y, FourLinksNode<T> *newNode)
     {
         FourLinksNode<T> *columnNode = GetAuxX(Head, x + 1);        //columnNode is the column where the newNode is going to be added (since it's necessary to have the exact column, the index is 1 greater -> 'x + 1').
         FourLinksNode<T> *auxYNode = GetAuxY(columnNode, y);        //auxYNode is the previous node according to 'y'
-        //This may throw an exception, indicating that the node already exists. Should be handled when the function 'Insert' is called.
+        //This may throw an exception, indicating that the node already exists. Should be handled when the function 'Add' is called.
         AddY(newNode, x, y, auxYNode);
         FourLinksNode<T> *rowNode = GetAuxY(Head, y + 1);           //rowNode is the row where the newNode is going to be added (since it's necessary to have the exact column, the index is 1 greater -> 'y + 1').
         FourLinksNode<T> *auxXNode = GetAuxX(rowNode, x);           //auxXNode is the previous node according to 'x'
-        //This may throw an exception, indicating that the node already exists. Should be handled when the function 'Insert' is called.
+        //This may throw an exception, indicating that the node already exists. Should be handled when the function 'Add' is called.
         AddX(newNode, x, y, auxXNode);
     }
     void AddY(FourLinksNode<T> *newNode, int xIndex, int yIndex, FourLinksNode<T> *auxNode)
@@ -194,7 +260,7 @@ private:
             newNode->Up = auxNode;
         }
         //If the auxNode's Down has the same YPos as y means that can't be added because already exists.
-        else if (auxNode->Down!=0 && auxNode->Down->YPos!=yIndex)
+        else if (auxNode->Down!=0 && auxNode->Down->YPos!=yIndex && auxNode->YPos!=yIndex)
         {
             //Appends a new node between the aux and his next
             newNode->XPos = xIndex;
@@ -221,7 +287,7 @@ private:
             newNode->Left = auxNode;
         }
         //If the auxNode's Right has the same XPos as x means that can't be added because already exists.
-        else if(auxNode->Right!=0 && auxNode->Right->XPos!=xIndex)
+        else if(auxNode->Right!=0 && auxNode->Right->XPos!=xIndex && auxNode->XPos!=xIndex)
         {
             //Appends a new node between the aux and his next
             /*                  Example                      */
